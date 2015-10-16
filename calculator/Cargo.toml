@@ -2,3 +2,6 @@
 name = "calculator"
 version = "0.1.0"
 authors = ["david"]
+
+[dependencies]
+regex = "0.1.41"
