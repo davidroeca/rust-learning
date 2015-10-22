@@ -28,7 +28,8 @@ enum BinaryOp {
 
 enum Expression {
     Single(f64),
-    Full(Box<Expression>, BinaryOp, Box<Expression>)
+    Full(Box<Expression>, BinaryOp, Box<Expression>),
+    Not
 }
 
 
@@ -130,7 +131,8 @@ fn eval_expr(expr: &Expression) -> Option<f64> {
                 BinaryOp::Multiply => Some(e1_val * e2_val),
                 BinaryOp::Divide => Some(e1_val / e2_val)
             }
-        }
+        },
+        Expression::Not => return None
     };
 }
 
@@ -140,8 +142,9 @@ fn parse_tokens(tokens: &Vec<Token>, vars: &mut HashMap<String, f64>) -> Option<
 
     fn parse_expression(index: usize, max_index: usize, tokens: &Vec<Token>,
                         vars: &HashMap<String, f64>) -> (Expression, usize) {
+        let incorrect_syntax = (Expression::Not, max_index + 1);
         if index > max_index {
-            panic!("Index out of range");
+            return incorrect_syntax;
         }
         let (lhs, op_index) = match tokens[index] {
             Token::Number(n) => return (Expression::Single(n), index + 1),
@@ -151,20 +154,20 @@ fn parse_tokens(tokens: &Vec<Token>, vars: &mut HashMap<String, f64>) -> Option<
                     index + 1),
             Token::LParen => parse_expression(index + 1, max_index, tokens,
                                               vars),
-            _ => panic!("Invalid Token")
+            _ => return incorrect_syntax
         };
         if op_index > max_index {
-            panic!("Index out of range");
+            return incorrect_syntax;
         }
         let (op, rhs_index) = (match tokens[op_index] {
             Token::Add => BinaryOp::Add,
             Token::Subtract => BinaryOp::Subtract,
             Token::Divide => BinaryOp::Divide,
             Token::Multiply => BinaryOp::Multiply,
-            _ => panic!("Invalid Token")
+            _ => return incorrect_syntax
         }, op_index + 1);
         if rhs_index > max_index {
-            panic!("Index out of range");
+            return incorrect_syntax;
         }
         let (rhs, next_index) = match tokens[rhs_index] {
             Token::Number(n) => (Expression::Single(n), rhs_index + 1),
@@ -173,14 +176,14 @@ fn parse_tokens(tokens: &Vec<Token>, vars: &mut HashMap<String, f64>) -> Option<
                     rhs_index + 1),
             Token::LParen => parse_expression(rhs_index + 1, max_index, tokens,
                                               vars),
-            _ => panic!("Invalid Token")
+            _ => return incorrect_syntax
         };
         if next_index > max_index {
-            panic!("Index out of range");
+            return incorrect_syntax;
         }
         match tokens[next_index] {
             Token::RParen => (),
-            _ => panic!("Right parenthesis expected")
+            _ => return incorrect_syntax
         };
         return (Expression::Full(Box::new(lhs), op, Box::new(rhs)),
                 next_index + 1);
