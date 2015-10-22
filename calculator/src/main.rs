@@ -1,7 +1,7 @@
 use std::io;
 use std::io::prelude::*;
-use std::str::FromStr;
 use std::collections::HashMap;
+use std::ops::Deref;
 
 extern crate regex;
 use regex::Regex;
@@ -112,36 +112,67 @@ fn define_token(token: &str) -> Token {
     }
 }
 
-fn parse_tokens(tokens: Vec<Token>, vars: &mut HashMap<String, f64>) -> Expression {
+fn eval_expr(expr: &Expression) -> Option<f64> {
+    match *expr {
+        Expression::Single(val) => return Some(val),
+        Expression::Full(ref e1, ref op, ref e2) => {
+            let e1_val = match eval_expr(e1.deref()) {
+                Some(val1) => val1,
+                None => return None
+            };
+            let e2_val = match eval_expr(e2.deref()) {
+                Some(val2) => val2,
+                None => return None
+            };
+            return match *op {
+                BinaryOp::Add => Some(e1_val + e2_val),
+                BinaryOp::Subtract => Some(e1_val - e2_val),
+                BinaryOp::Multiply => Some(e1_val * e2_val),
+                BinaryOp::Divide => Some(e1_val / e2_val)
+            }
+        }
+    };
+}
+
+fn parse_tokens(tokens: &Vec<Token>, vars: &mut HashMap<String, f64>) -> Option<f64> {
     let length = tokens.len();
     let max_index = length - 1;
-    fn parse_expression(index: usize, max_index: usize, tokens: Vec<Token>,
-                        vars: &mut HashMap<String, f64>) -> (Expression, usize) {
+
+    fn parse_expression(index: usize, max_index: usize, tokens: &Vec<Token>,
+                        vars: &HashMap<String, f64>) -> (Expression, usize) {
         if index > max_index {
             panic!("Index out of range");
         }
-        let (LHS, op_index) = match tokens[index] {
-            Token::LParen => parse_expression(index + 1, max_index, tokens, vars),
-            Token::Number(n) => (Expression::Single(n), index + 1),
-            Token::Variable(v) => (Expression::Single(vars[v]), index + 1),
+        let (lhs, op_index) = match tokens[index] {
+            Token::Number(n) => return (Expression::Single(n), index + 1),
+            Token::Variable(ref v) => return (
+                Expression::Single(
+                    *vars.get(v).expect("Variable doesn't exist")),
+                    index + 1),
+            Token::LParen => parse_expression(index + 1, max_index, tokens,
+                                              vars),
             _ => panic!("Invalid Token")
         };
         if op_index > max_index {
             panic!("Index out of range");
         }
-        let (OP, rhs_index) = (match tokens[op_index] {
+        let (op, rhs_index) = (match tokens[op_index] {
             Token::Add => BinaryOp::Add,
             Token::Subtract => BinaryOp::Subtract,
             Token::Divide => BinaryOp::Divide,
-            Token::Multiply => BinaryOp::Multiply
+            Token::Multiply => BinaryOp::Multiply,
+            _ => panic!("Invalid Token")
         }, op_index + 1);
         if rhs_index > max_index {
             panic!("Index out of range");
         }
-        let (RHS, next_index) = match tokens[rhs_index] {
-            Token::LParen => parse_expression(rhs_index + 1, max_index, tokens, vars),
-            Token::Number(n) => (Expression::Single(n), op_index + 1),
-            Token::Variable(v) => (Expression::Single(vars.get(v)), op_index + 1),
+        let (rhs, next_index) = match tokens[rhs_index] {
+            Token::Number(n) => (Expression::Single(n), rhs_index + 1),
+            Token::Variable(ref v) => (Expression::Single(
+                    *vars.get(v).expect("Variable doesn't exist")),
+                    rhs_index + 1),
+            Token::LParen => parse_expression(rhs_index + 1, max_index, tokens,
+                                              vars),
             _ => panic!("Invalid Token")
         };
         if next_index > max_index {
@@ -151,24 +182,31 @@ fn parse_tokens(tokens: Vec<Token>, vars: &mut HashMap<String, f64>) -> Expressi
             Token::RParen => (),
             _ => panic!("Right parenthesis expected")
         };
-        return (Expression::Full(Box::new(LHS), OP, Box::new(RHS)), next_index + 1);
+        return (Expression::Full(Box::new(lhs), op, Box::new(rhs)),
+                next_index + 1);
     }
+    fn parse_assignment(tokens: &Vec<Token>, vars: &mut HashMap<String, f64>,
+                        max_index: usize) -> Option<f64> {
+        let var = match tokens[0] {
+            Token::Variable(ref v) => v,
+            _ => return None
+        };
+        match tokens[1] {
+            Token::Assign => (),
+            _ => return None
+        };
+        let (expression, _) = parse_expression(2, max_index, tokens, vars);
+        match eval_expr(&expression) {
+            Some(num) => vars.insert(String::from(var.as_ref()), num),
+            None => None
+        }
+    }
+    match parse_assignment(tokens, vars, max_index) {
+        Some(num) => return Some(num),
+        _ => ()
+    };
     let (expression, _) = parse_expression(0, max_index, tokens, vars);
-    expression
-    //for i in 0..length {
-        //match tokens[i] {
-            //Token::LParen => println!("Left paren"),
-            //Token::RParen => println!("Right paren"),
-            //Token::Add => println!("Add"),
-            //Token::Subtract => println!("Subtract"),
-            //Token::Multiply => println!("Multiply"),
-            //Token::Divide => println!("Divide"),
-            //Token::Number(v) => println!("Number: {}", v),
-            //Token::Variable(ref n) => println!("Variable: {}", n),
-            //Token::Assign => println!("Assign"),
-            //Token::Invalid => println!("Invalid")
-        //}
-    //}
+    eval_expr(&expression)
 }
 
 fn main() {
@@ -183,6 +221,10 @@ fn main() {
         }
         let undefined_tokens = tokenize_input(input.as_ref());
         let defined_tokens = define_tokens(undefined_tokens);
-        parse_tokens(defined_tokens, &mut vars);
+        let value = parse_tokens(&defined_tokens, &mut vars);
+        match value {
+            Some(val) => println!("{}", val),
+            None => ()
+        };
     }
 }
