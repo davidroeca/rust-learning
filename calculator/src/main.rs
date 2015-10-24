@@ -136,7 +136,18 @@ fn eval_expr(expr: &Expression) -> Option<f64> {
     };
 }
 
-fn parse_tokens(tokens: &Vec<Token>, vars: &mut HashMap<String, f64>) -> Option<f64> {
+fn analyze_variable(var: &String,
+                    vars: &HashMap<String, f64>,
+                    index: usize,
+                    max_index: usize) -> (Expression, usize) {
+    return match vars.get(var) {
+        Some(num) => (Expression::Single(*num), index + 1),
+        None => (Expression::Not, max_index + 1)
+    }
+}
+
+fn parse_tokens(tokens: &Vec<Token>,
+                vars: &mut HashMap<String, f64>) -> Option<f64> {
     let length = tokens.len();
     let max_index = length - 1;
 
@@ -148,10 +159,10 @@ fn parse_tokens(tokens: &Vec<Token>, vars: &mut HashMap<String, f64>) -> Option<
         }
         let (lhs, op_index) = match tokens[index] {
             Token::Number(n) => return (Expression::Single(n), index + 1),
-            Token::Variable(ref v) => return (
-                Expression::Single(
-                    *vars.get(v).expect("Variable doesn't exist")),
-                    index + 1),
+            Token::Variable(ref v) => return analyze_variable(v,
+                                                              &vars,
+                                                              index,
+                                                              max_index),
             Token::LParen => parse_expression(index + 1, max_index, tokens,
                                               vars),
             _ => return incorrect_syntax
@@ -171,9 +182,10 @@ fn parse_tokens(tokens: &Vec<Token>, vars: &mut HashMap<String, f64>) -> Option<
         }
         let (rhs, next_index) = match tokens[rhs_index] {
             Token::Number(n) => (Expression::Single(n), rhs_index + 1),
-            Token::Variable(ref v) => (Expression::Single(
-                    *vars.get(v).expect("Variable doesn't exist")),
-                    rhs_index + 1),
+            Token::Variable(ref v) => return analyze_variable(v,
+                                                              vars,
+                                                              rhs_index,
+                                                              max_index),
             Token::LParen => parse_expression(rhs_index + 1, max_index, tokens,
                                               vars),
             _ => return incorrect_syntax
@@ -227,7 +239,7 @@ fn main() {
         let value = parse_tokens(&defined_tokens, &mut vars);
         match value {
             Some(val) => println!("{}", val),
-            None => ()
+            None => println!("Something went wrong")
         };
     }
 }
