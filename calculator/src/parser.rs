@@ -86,11 +86,9 @@ pub fn parse_tokens(tokens: &Vec<Token>,
             return incorrect_syntax;
         }
         let (lhs, op_index) = match tokens[index] {
-            Token::Number(n) => return (Expression::Single(n), index + 1),
-            Token::Variable(ref v) => return analyze_variable(v,
-                                                              &vars,
-                                                              index,
-                                                              max_index),
+            Token::Number(n) => (Expression::Single(n), index + 1),
+            Token::Variable(ref v) => analyze_variable(v, &vars, index,
+                                                       max_index),
             Token::LParen => parse_expression(index + 1, max_index, tokens,
                                               vars),
             _ => return incorrect_syntax
@@ -103,6 +101,7 @@ pub fn parse_tokens(tokens: &Vec<Token>,
             Token::Subtract => BinaryOp::Subtract,
             Token::Divide => BinaryOp::Divide,
             Token::Multiply => BinaryOp::Multiply,
+            Token::RParen => return (lhs, op_index + 1),
             _ => return incorrect_syntax
         }, op_index + 1);
         if rhs_index > max_index {
@@ -110,23 +109,23 @@ pub fn parse_tokens(tokens: &Vec<Token>,
         }
         let (rhs, next_index) = match tokens[rhs_index] {
             Token::Number(n) => (Expression::Single(n), rhs_index + 1),
-            Token::Variable(ref v) => return analyze_variable(v,
-                                                              vars,
+            Token::Variable(ref v) => analyze_variable(v,
+                                                              &vars,
                                                               rhs_index,
                                                               max_index),
             Token::LParen => parse_expression(rhs_index + 1, max_index, tokens,
                                               vars),
             _ => return incorrect_syntax
         };
-        if next_index > max_index {
-            return incorrect_syntax;
-        }
-        match tokens[next_index] {
-            Token::RParen => (),
-            _ => return incorrect_syntax
-        };
+        //if next_index > max_index {
+            //return incorrect_syntax;
+        //}
+        //match tokens[next_index] {
+            //Token::RParen => (),
+            //_ => return incorrect_syntax
+        //};
         return (Expression::Full(Box::new(lhs), op, Box::new(rhs)),
-                next_index + 1);
+                next_index);
     }
     fn parse_assignment(tokens: &Vec<Token>, vars: &mut HashMap<String, f64>,
                         max_index: usize) -> Option<f64> {
