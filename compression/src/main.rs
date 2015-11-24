@@ -12,7 +12,7 @@ use std::fmt;
 // ------------------------------------------------------------------
 // LZW driver functions
 // ------------------------------------------------------------------
-fn lzw_compress<T: Read, U: Write>(input: &T,
+fn lzw_compress<T: Read, U: Write>(input: &mut T,
                                    output: &mut U,
                                    max_code: u32) {
     // Initialize the code dictionary
@@ -28,34 +28,38 @@ fn lzw_compress<T: Read, U: Write>(input: &T,
 
     // Compress
     for c in input.chars() {
+        let current_char = c.unwrap();
         // figure out a better numeric write
-        current_string.push(c.unwrap());
+        current_string.push(current_char);
         match codes.get(&current_string) {
             None => {
                 if (next_code <= max_code) {
-                    codes.insert(current_string, next_code);
+                    codes.insert(current_string.clone(), next_code);
                     next_code += 1;
                 }
                 // Get code for string of known value; write
                 current_string.pop();
-                write!(output, "{:?}",
-                            codes.get(&current_string).expect("error"));
+                // WRITE
+                output.write(format!("{}", codes.get(&current_string).expect("error")).as_ref());
 
                 // Reset string to current character, continue search
                 current_string.clear();
-                current_string.push(c.unwrap());
+                current_string.push(current_char);
             },
             Some(_)=> ()
         };        
     }
-    try!(output.write_fmt(format_args!(
-                "{}",
-                codes
-                .get(&current_string)
-                .unwrap())));
+    //print!("{}", codes.get(&current_string).unwrap())
+    // WRITE
+    output.write(format!("{}", codes.get(&current_string).expect("error")).as_ref());
+    //try!(output.write_fmt(format_args!(
+                //"{}",
+                //codes
+                //.get(&current_string)
+                //.unwrap())));
 }
 
-fn lzw_decompress<T: Read, U: Write>(input: &T,
+fn lzw_decompress<T: Read, U: Write>(input: &mut T,
                                      output: &mut U,
                                      max_code: u32) {
     // Initialize the string dictionary
@@ -70,22 +74,28 @@ fn lzw_decompress<T: Read, U: Write>(input: &T,
     let mut previous_string = String::new();
     // Decompress
     for c in input.chars() {
+        let current_char = c.unwrap();
+        // debugging
+        if current_char == ',' || current_char == ' ' {
+            continue;
+        }
         // figure out a better numeric read
-        let current_code = u32::from_str(c.to_string().as_ref()).unwrap();
-        match strings.get(current_code) {
+        let current_code = u32::from_str(current_char.to_string().as_ref()).unwrap();
+        match strings.get(&current_code) {
             None => {
                 let prev_start = previous_string.chars()
                     .nth(0).unwrap().to_string();
-                strings.insert(current_code, previous_string + &prev_start);
+                strings.insert(current_code, previous_string.clone() + &prev_start);
             },
             Some(_) => ()
         };
-        let current_string = strings.get(current_code).unwrap();
-        output.write("{}", current_string);
+        let current_string = strings.get(&current_code).expect("error");
+        // WRITE
+        output.write(format!("{}", current_string).as_ref());
         if !previous_string.is_empty() && next_code <= max_code {
             let current_start = current_string.chars()
                 .nth(0).unwrap().to_string();
-            strings.insert(next_code, previous_string + &current_start);
+            strings.insert(next_code, previous_string.clone() + &current_start);
             next_code += 1;
         }
         previous_string = current_string.clone();
@@ -93,5 +103,5 @@ fn lzw_decompress<T: Read, U: Write>(input: &T,
 }
 
 fn main() {
-    println!("Hi");
+    lzw_compress(&mut std::io::stdin(), &mut std::io::stdout(), 12183);
 }
