@@ -52,11 +52,6 @@ fn lzw_compress<T: Read, U: Write>(input: &mut T,
     //print!("{}", codes.get(&current_string).unwrap())
     // WRITE
     output.write(format!("{}", codes.get(&current_string).expect("error")).as_ref());
-    //try!(output.write_fmt(format_args!(
-                //"{}",
-                //codes
-                //.get(&current_string)
-                //.unwrap())));
 }
 
 fn lzw_decompress<T: Read, U: Write>(input: &mut T,
@@ -89,14 +84,13 @@ fn lzw_decompress<T: Read, U: Write>(input: &mut T,
             },
             Some(_) => ()
         };
-        let current_string = strings.get(&current_code).expect("error");
+        let current_string = strings.get(&current_code).expect("error").clone();
         // WRITE
         output.write(format!("{}", current_string).as_ref());
         if !previous_string.is_empty() && next_code <= max_code {
             let current_start = current_string.chars()
                 .nth(0).unwrap().to_string();
             strings.insert(next_code, previous_string.clone() + &current_start);
-            next_code += 1;
         }
         previous_string = current_string.clone();
     }
