@@ -2,3 +2,6 @@
 name = "compression"
 version = "0.1.0"
 authors = ["david <david.roeca@gmail.com>"]
+
+[dependencies]
+bincode = "0.4.0"
