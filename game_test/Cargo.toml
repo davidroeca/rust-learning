@@ -1,0 +1,10 @@
+[package]
+name = "game_test"
+version = "0.1.0"
+authors = ["David Roeca"]
+
+[dependencies]
+piston = "0.26.0"
+piston2d-graphics = "0.17.3"
+piston_window = "0.54.0"
+piston2d-opengl_graphics = "0.34.0"
