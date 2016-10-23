@@ -37,6 +37,8 @@ pub struct State {
     y_vel: f64,
     x_speed: f64,
     x_dir: XDir,
+    left_pressed: bool,
+    right_pressed: bool,
 }
 
 
@@ -48,6 +50,42 @@ impl State {
             y_vel: 0.0,
             x_speed: x_speed_in,
             x_dir: XDir::Static,
+            left_pressed: false,
+            right_pressed: false,
+        }
+    }
+
+    fn handle_button(&mut self, button: Button) {
+        match button {
+            Button::Keyboard(Key::Up) => {
+                self.jump();
+            },
+            Button::Keyboard(Key::Left) => {
+                self.left_pressed = true;
+                self.change_x_dir(XDir::Left);
+            },
+            Button::Keyboard(Key::Right) => {
+                self.right_pressed = true;
+                self.change_x_dir(XDir::Right);
+            },
+            _ => (),
+        }
+    }
+    fn handle_release(&mut self, button: Button) {
+        match button {
+            Button::Keyboard(Key::Left) => {
+                if !self.right_pressed {
+                    self.change_x_dir(XDir::Static);
+                }
+                self.left_pressed = false;
+            },
+            Button::Keyboard(Key::Right) => {
+                if !self.left_pressed {
+                    self.change_x_dir(XDir::Static);
+                }
+                self.right_pressed = false;
+            },
+            _ => (),
         }
     }
 
@@ -66,6 +104,38 @@ impl State {
     fn change_x_dir(&mut self, x_dir: XDir) {
         self.x_dir = x_dir;
     }
+
+    fn jump(&mut self) {
+        const JUMP_VEL: f64 = -500.0; // since negative is actually up
+        println!("Jump called; y_vel: {}", self.y_vel);
+        if self.y >= 0.0 {
+            // Jumper must be on ground
+            self.change_y_vel(JUMP_VEL);
+        }
+    }
+
+    fn handle_time_change(&mut self, dt: f64) {
+        let g = 1500.0;
+        let prev_y_vel = self.y_vel;
+        let new_y_vel = self.y_vel + g * dt;
+        let ave_y_vel = (prev_y_vel + new_y_vel) / 2.0;
+        let expected_y = self.y + ave_y_vel * dt;
+        if expected_y > 0.0 {
+            self.change_y_pos(0.0);
+            self.change_y_vel(0.0);
+        } else {
+            self.change_y_pos(expected_y);
+            self.change_y_vel(new_y_vel);
+        }
+        // Handle X movement
+        let x = self.x;
+        let x_speed = self.x_speed;
+        match self.x_dir {
+            XDir::Left => self.change_x_pos(x - x_speed * dt),
+            XDir::Right => self.change_x_pos(x + x_speed * dt),
+            XDir::Static => (),
+        }
+    }
 }
 
 
@@ -82,8 +152,7 @@ impl App {
             clear,
             rectangle,
             line,
-            Line,
-            Transformed
+            Transformed,
         };
         const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 1.0];
         const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
@@ -111,40 +180,9 @@ impl App {
 
     fn update(&mut self, args: &UpdateArgs) {
         // Basic kinematic equations
-        let g = 1500.0;
-        let prev_y_vel = self.state.y_vel;
-        let new_y_vel = self.state.y_vel + g * args.dt;
-        let ave_y_vel = (prev_y_vel + new_y_vel) / 2.0;
-        let expected_y = self.state.y + ave_y_vel * args.dt;
-        if expected_y > 0.0 {
-            self.state.change_y_pos(0.0);
-            self.state.change_y_vel(0.0);
-        } else {
-            self.state.change_y_pos(expected_y);
-            self.state.change_y_vel(new_y_vel);
-        }
-        // Handle X movement
-        let x = self.state.x;
-        let x_speed = self.state.x_speed;
-        match self.state.x_dir {
-            XDir::Left => self.state.change_x_pos(x - x_speed * args.dt),
-            XDir::Right => self.state.change_x_pos(x + x_speed * args.dt),
-            XDir::Static => (),
-        }
+        self.state.handle_time_change(args.dt);
     }
 
-    fn jump(&mut self) {
-        const JUMP_VEL: f64 = -500.0; // since negative is actually up
-        println!("Jump called; y_vel: {}", self.state.y_vel);
-        if self.state.y >= 0.0 {
-            // Jumper must be on ground
-            self.state.change_y_vel(JUMP_VEL);
-        }
-    }
-
-    fn change_x_dir(&mut self, x_dir: XDir) {
-        self.state.change_x_dir(x_dir);
-    }
 }
 
 fn main() {
@@ -163,8 +201,6 @@ fn main() {
         state: State::new(x_speed),
         s: 50.0,
     };
-    let mut right_pressed = false;
-    let mut left_pressed = false;
     let mut events = window.events();
     while let Some(e) = events.next(&mut window) {
         if let Some(r) = e.render_args() {
@@ -175,38 +211,11 @@ fn main() {
         }
 
         if let Some(button) = e.press_args() {
-            match button {
-                Button::Keyboard(Key::Up) => {
-                    app.jump();
-                },
-                Button::Keyboard(Key::Left) => {
-                    left_pressed = true;
-                    app.change_x_dir(XDir::Left);
-                },
-                Button::Keyboard(Key::Right) => {
-                    right_pressed = true;
-                    app.change_x_dir(XDir::Right);
-                },
-                _ => (),
-            }
+            app.state.handle_button(button);
         }
 
         if let Some(button) = e.release_args() {
-            match button {
-                Button::Keyboard(Key::Left) => {
-                    if !right_pressed {
-                        app.change_x_dir(XDir::Static);
-                    }
-                    left_pressed = false;
-                },
-                Button::Keyboard(Key::Right) => {
-                    if !left_pressed {
-                        app.change_x_dir(XDir::Static);
-                    }
-                    right_pressed = false;
-                },
-                _ => (),
-            }
+            app.state.handle_release(button);
         }
     }
 }
