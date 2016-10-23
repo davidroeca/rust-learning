@@ -81,22 +81,31 @@ impl App {
         use graphics::{
             clear,
             rectangle,
+            line,
+            Line,
             Transformed
         };
         const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 1.0];
+        const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
         const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
         let square = rectangle::square(0.0, 0.0, self.s);
+        let horiz_line: [f64; 4] = [0.0, 0.0, 0.0, 1.0];
 
         let x_origin = (args.width / 2) as f64;
         let y_origin = (args.height / 2) as f64;
         let (x, y) = (
-            x_origin + self.state.x,
-            y_origin + self.state.y,
+            x_origin + self.state.x - self.s,
+            y_origin + self.state.y - self.s,
             );
         self.gl.draw(args.viewport(), |c, gl| {
             clear(WHITE, gl);
             let transform = c.transform.trans(x, y);
             rectangle(BLUE, square, transform, gl);
+            let ground_trans = c.transform.trans(0.0, y_origin);
+            line(
+                BLACK, args.width as f64,
+                horiz_line, ground_trans, gl
+                );
         })
     }
 
