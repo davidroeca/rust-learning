@@ -24,6 +24,7 @@ use opengl_graphics::{
 };
 use opengl_graphics::glyph_cache::GlyphCache;
 
+mod utils;
 mod player;
 mod orb;
 
@@ -39,7 +40,15 @@ impl App {
     pub fn new(s: f64, glref: OpenGL) -> App {
         let mut orbs = Vec::new();
         orbs.push(orb::Orb {
-            state: orb::OrbState::new(800, 800, 100.0),
+            state: orb::OrbState::new_dumb(800, 800, 100.0),
+            r: 6.0,
+        });
+        orbs.push(orb::Orb {
+            state: orb::OrbState::new_smart(800, 800, 300.0),
+            r: 6.0,
+        });
+        orbs.push(orb::Orb {
+            state: orb::OrbState::new(800, 800, 30.0),
             r: 6.0,
         });
         let x_speed = 300.0;
@@ -84,7 +93,9 @@ impl App {
             let sq = rectangle::square(0.0, 0.0, o.r * 2.0);
             circle_vec.push((o_x, o_y, sq))
         }
-        let mut glyph_cache = GlyphCache::new("font/Xolonium-Regular.ttf")
+        let top_dir = utils::get_project_dir().expect("top directory not found");
+        let font_path = top_dir.join("font/Xolonium-Regular.ttf");
+        let mut glyph_cache = GlyphCache::new(font_path)
             .expect("failed to load font");
         let (text_x, text_y) = (
             10.0, 50.0

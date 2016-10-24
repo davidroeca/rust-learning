@@ -58,6 +58,26 @@ impl OrbState {
         }
     }
 
+    pub fn new_dumb(height: u32, width: u32, speed: f64) -> OrbState {
+        OrbState {
+            x: pos_neg() as f64 * random_f64_less_than((width/2) as f64),
+            y: pos_neg() as f64 * random_f64_less_than((height/2) as f64),
+            dir_rad: random_f64_less_than(2.0 * f64::consts::PI),
+            speed: speed,
+            max_rad_turn: f64::consts::PI / 20.0,
+        }
+    }
+
+    pub fn new_smart(height: u32, width: u32, speed: f64) -> OrbState {
+        OrbState {
+            x: pos_neg() as f64 * random_f64_less_than((width/2) as f64),
+            y: pos_neg() as f64 * random_f64_less_than((height/2) as f64),
+            dir_rad: random_f64_less_than(2.0 * f64::consts::PI),
+            speed: speed,
+            max_rad_turn: f64::consts::PI / 2.0,
+        }
+    }
+
     pub fn handle_time_change(&mut self, p_x: f64, p_y: f64, dt: f64) {
 
         // Strange; only works when i set the speed to be negative
