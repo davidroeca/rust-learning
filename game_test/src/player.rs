@@ -15,6 +15,7 @@ pub struct PlayerState {
     y_vel: f64,
     x_speed: f64,
     x_dir: XDir,
+    pub time_s: f64,
     left_pressed: bool,
     right_pressed: bool,
 }
@@ -27,6 +28,7 @@ impl PlayerState {
             y_vel: 0.0,
             x_speed: x_speed_in,
             x_dir: XDir::Static,
+            time_s: 0.0,
             left_pressed: false,
             right_pressed: false,
         }
@@ -68,6 +70,8 @@ impl PlayerState {
     }
 
     pub fn handle_time_change(&mut self, dt: f64) {
+        // Update the time variable
+        self.time_s += dt;
         // Basic kinematic equations
         let g = 2000.0;
         let prev_y_vel = self.y_vel;

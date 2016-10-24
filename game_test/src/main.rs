@@ -22,6 +22,7 @@ use opengl_graphics::{
     OpenGL,
     GlGraphics,
 };
+use opengl_graphics::glyph_cache::GlyphCache;
 
 mod player;
 mod orb;
@@ -56,10 +57,12 @@ impl App {
             rectangle,
             ellipse,
             line,
+            text,
+            character,
             Transformed,
         };
         const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 1.0];
-        const RED: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
+        const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
         const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
         const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
         let square = rectangle::square(0.0, 0.0, self.s);
@@ -81,8 +84,19 @@ impl App {
             let sq = rectangle::square(0.0, 0.0, o.r * 2.0);
             circle_vec.push((o_x, o_y, sq))
         }
+        let mut glyph_cache = GlyphCache::new("font/Xolonium-Regular.ttf")
+            .expect("failed to load font");
+        let (text_x, text_y) = (
+            10.0, 50.0
+            );
+        let sec_int = self.state.time_s as i32;
         self.gl.draw(args.viewport(), |c, gl| {
             clear(WHITE, gl);
+            let text_trans = c.transform.trans(text_x, text_y);
+            text(
+                BLACK, 40, sec_int.to_string().as_ref(), &mut glyph_cache,
+                text_trans, gl
+                );
             let transform = c.transform.trans(x, y);
             rectangle(BLUE, square, transform, gl);
             let ground_trans = c.transform.trans(0.0, ground_y);
