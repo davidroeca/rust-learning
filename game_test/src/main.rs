@@ -28,6 +28,46 @@ mod utils;
 mod player;
 mod orb;
 
+use orb::random_f64_less_than;
+
+///
+/// Takes the center of a circle and a square, along with side length/radius
+/// and comuptes whether or not the two overlap
+///
+fn square_circle_overlap(cx: f64, cy: f64, cr: f64, sx: f64, sy: f64, ss: f64)
+-> bool {
+    // Takes point and determines if it lies in the circle
+    let point_in_circle = |px: f64, py: f64| -> bool {
+        let dx = px - cx;
+        let dy = py - cy;
+        (dx * dx + dy * dy).sqrt() <= cr
+    };
+
+
+    let s_top = sy + ss / 2.0;
+    let s_bot = sy - ss / 2.0;
+    let s_rig = sx + ss / 2.0;
+    let s_lef = sx - ss / 2.0;
+    let point_in_square = |px: f64, py: f64| -> bool {
+        px <= s_rig && px >= s_lef && py <= s_top && py >= s_bot
+    };
+
+    let c_top = cy + cr;
+    let c_bot = cy - cr;
+    let c_rig = cx + cr;
+    let c_lef = cx - cr;
+    // Check if circle points are in square
+    point_in_square(cx, c_top) ||
+    point_in_square(cx, c_bot) ||
+    point_in_square(c_lef, cy) ||
+    point_in_square(c_rig, cy) ||
+    // Check if square corners are in circle
+    point_in_circle(s_rig, s_bot) ||
+    point_in_circle(s_lef, s_bot) ||
+    point_in_circle(s_rig, s_top) ||
+    point_in_circle(s_lef, s_top)
+}
+
 pub struct App {
     gl: GlGraphics,
     state: player::PlayerState,
@@ -38,19 +78,7 @@ pub struct App {
 impl App {
 
     pub fn new(s: f64, glref: OpenGL) -> App {
-        let mut orbs = Vec::new();
-        orbs.push(orb::Orb {
-            state: orb::OrbState::new_dumb(800, 800, 100.0),
-            r: 6.0,
-        });
-        orbs.push(orb::Orb {
-            state: orb::OrbState::new_smart(800, 800, 300.0),
-            r: 6.0,
-        });
-        orbs.push(orb::Orb {
-            state: orb::OrbState::new(800, 800, 30.0),
-            r: 6.0,
-        });
+        let mut orbs: Vec<orb::Orb> = Vec::new();
         let x_speed = 300.0;
         App {
             gl: GlGraphics::new(glref),
@@ -67,7 +95,6 @@ impl App {
             ellipse,
             line,
             text,
-            character,
             Transformed,
         };
         const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 1.0];
@@ -125,10 +152,31 @@ impl App {
     fn update(&mut self, args: &UpdateArgs) {
         let p_x = self.state.x;
         let p_y = self.state.y;
+        let p_s = self.s;
+
+        let mut vec_deleted = Vec::new();
+        // Handle collisions
+        for (i, o) in self.orbs.iter().enumerate() {
+            if square_circle_overlap(o.state.x, o.state.y, o.r, p_x, p_y, p_s) {
+                vec_deleted.push(i);
+            }
+        }
+        for i in vec_deleted.iter() {
+            self.orbs.remove(*i);
+        }
+
         for o in self.orbs.iter_mut() {
             o.state.handle_time_change(p_x, p_y, args.dt);
         }
         self.state.handle_time_change(args.dt);
+        if self.orbs.len() == 0 {
+            for _ in 0..3 {
+                self.orbs.push(orb::Orb {
+                    state: orb::OrbState::new(800, 800, random_f64_less_than(300.0)),
+                    r: 6.0,
+                });
+            }
+        }
     }
 
 }

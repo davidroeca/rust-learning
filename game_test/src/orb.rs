@@ -1,7 +1,7 @@
 extern crate rand;
 use std::f64;
 
-fn random_f64_less_than(max: f64) -> f64 {
+pub fn random_f64_less_than(max: f64) -> f64 {
     let rand_num = rand::random::<f64>();
     max * rand_num
 }
@@ -54,27 +54,7 @@ impl OrbState {
             y: pos_neg() as f64 * random_f64_less_than((height/2) as f64),
             dir_rad: random_f64_less_than(2.0 * f64::consts::PI),
             speed: speed,
-            max_rad_turn: f64::consts::PI / 6.0,
-        }
-    }
-
-    pub fn new_dumb(height: u32, width: u32, speed: f64) -> OrbState {
-        OrbState {
-            x: pos_neg() as f64 * random_f64_less_than((width/2) as f64),
-            y: pos_neg() as f64 * random_f64_less_than((height/2) as f64),
-            dir_rad: random_f64_less_than(2.0 * f64::consts::PI),
-            speed: speed,
-            max_rad_turn: f64::consts::PI / 20.0,
-        }
-    }
-
-    pub fn new_smart(height: u32, width: u32, speed: f64) -> OrbState {
-        OrbState {
-            x: pos_neg() as f64 * random_f64_less_than((width/2) as f64),
-            y: pos_neg() as f64 * random_f64_less_than((height/2) as f64),
-            dir_rad: random_f64_less_than(2.0 * f64::consts::PI),
-            speed: speed,
-            max_rad_turn: f64::consts::PI / 2.0,
+            max_rad_turn: f64::consts::PI / random_f64_less_than(10.0),
         }
     }
 
