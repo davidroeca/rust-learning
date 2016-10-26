@@ -150,7 +150,7 @@ impl App {
     }
 
     fn update(&mut self, args: &UpdateArgs) {
-        let num_orbs = 7;
+        let num_orbs = 20;
         let p_x = self.state.x;
         let p_y = self.state.y;
         let p_s = self.s;

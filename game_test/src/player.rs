@@ -109,7 +109,7 @@ impl PlayerState {
         if self.y >= 0.0 {
             self.change_x_boost(0.0);
         } else {
-            let drag_const = 15.0;
+            let drag_const = 3.0;
             let drag_vel = drag_const * x_total_speed * dt;
             let new_boost = 0f64.max(x_boost - drag_vel);
             self.change_x_boost(new_boost);
@@ -137,7 +137,7 @@ impl PlayerState {
     }
 
     fn boost(&mut self) {
-        let boost_vel = 5.0 * self.x_speed;
+        let boost_vel = 2.0 * self.x_speed;
         if self.y < 0.0 && self.x_boost == 0.0 {
             self.change_x_boost(boost_vel);
         }
