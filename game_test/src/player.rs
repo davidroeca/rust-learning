@@ -14,6 +14,7 @@ pub struct PlayerState {
     pub y: f64,
     y_vel: f64,
     x_speed: f64,
+    x_boost: f64,
     x_dir: XDir,
     pub time_s: f64,
     left_pressed: bool,
@@ -27,6 +28,7 @@ impl PlayerState {
             y: 0.0,
             y_vel: 0.0,
             x_speed: x_speed_in,
+            x_boost: 0.0,
             x_dir: XDir::Static,
             time_s: 0.0,
             left_pressed: false,
@@ -42,10 +44,18 @@ impl PlayerState {
             Button::Keyboard(Key::Left) => {
                 self.left_pressed = true;
                 self.change_x_dir(XDir::Left);
+                self.change_x_boost(0.0);
             },
             Button::Keyboard(Key::Right) => {
                 self.right_pressed = true;
                 self.change_x_dir(XDir::Right);
+                self.change_x_boost(0.0);
+            },
+            Button::Keyboard(Key::Space) => {
+                match self.x_dir {
+                    XDir::Left | XDir::Right => self.boost(),
+                    _ => (),
+                }
             },
             _ => (),
         }
@@ -87,11 +97,22 @@ impl PlayerState {
         }
         // Handle X movement
         let x = self.x;
+        let x_boost = self.x_boost;
         let x_speed = self.x_speed;
+        let x_total_speed = x_boost + x_speed;
         match self.x_dir {
-            XDir::Left => self.change_x_pos(x - x_speed * dt),
-            XDir::Right => self.change_x_pos(x + x_speed * dt),
-            XDir::Static => (),
+            XDir::Left => self.change_x_pos(x - x_total_speed * dt),
+                XDir::Right => self.change_x_pos(x + x_total_speed * dt),
+                XDir::Static => (),
+        }
+
+        if self.y >= 0.0 {
+            self.change_x_boost(0.0);
+        } else {
+            let drag_const = 15.0;
+            let drag_vel = drag_const * x_total_speed * dt;
+            let new_boost = 0f64.max(x_boost - drag_vel);
+            self.change_x_boost(new_boost);
         }
     }
 
@@ -111,8 +132,20 @@ impl PlayerState {
         self.x_dir = x_dir;
     }
 
+    fn change_x_boost(&mut self, x_boost: f64) {
+        self.x_boost = x_boost;
+    }
+
+    fn boost(&mut self) {
+        let boost_vel = 5.0 * self.x_speed;
+        if self.y < 0.0 && self.x_boost == 0.0 {
+            self.change_x_boost(boost_vel);
+        }
+
+    }
+
     fn jump(&mut self) {
-        const JUMP_VEL: f64 = -700.0; // since negative is actually up
+        const JUMP_VEL: f64 = -850.0; // since negative is actually up
         if self.y >= 0.0 {
             // Jumper must be on ground
             self.change_y_vel(JUMP_VEL);

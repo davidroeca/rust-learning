@@ -78,7 +78,7 @@ pub struct App {
 impl App {
 
     pub fn new(s: f64, glref: OpenGL) -> App {
-        let mut orbs: Vec<orb::Orb> = Vec::new();
+        let orbs: Vec<orb::Orb> = Vec::new();
         let x_speed = 300.0;
         App {
             gl: GlGraphics::new(glref),
@@ -150,6 +150,7 @@ impl App {
     }
 
     fn update(&mut self, args: &UpdateArgs) {
+        let num_orbs = 7;
         let p_x = self.state.x;
         let p_y = self.state.y;
         let p_s = self.s;
@@ -161,7 +162,9 @@ impl App {
                 vec_deleted.push(i);
             }
         }
-        for i in vec_deleted.iter() {
+
+        // Go backwards to ensure that order remains in tact
+        for i in vec_deleted.iter().rev() {
             self.orbs.remove(*i);
         }
 
@@ -170,9 +173,10 @@ impl App {
         }
         self.state.handle_time_change(args.dt);
         if self.orbs.len() == 0 {
-            for _ in 0..3 {
+            for _ in 0..num_orbs {
+                let orb_speed = 50.0 + random_f64_less_than(200.0);
                 self.orbs.push(orb::Orb {
-                    state: orb::OrbState::new(800, 800, random_f64_less_than(300.0)),
+                    state: orb::OrbState::new(800, 800, orb_speed),
                     r: 6.0,
                 });
             }
