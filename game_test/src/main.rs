@@ -70,7 +70,7 @@ fn square_circle_overlap(cx: f64, cy: f64, cr: f64, sx: f64, sy: f64, ss: f64)
 
 pub struct App {
     gl: GlGraphics,
-    state: player::PlayerState,
+    player: player::Player,
     orbs: Vec<orb::Orb>,
     s: f64,
 }
@@ -82,7 +82,7 @@ impl App {
         let x_speed = 300.0;
         App {
             gl: GlGraphics::new(glref),
-            state: player::PlayerState::new(x_speed),
+            player: player::Player::new(x_speed),
             orbs: orbs,
             s: s,
         }
@@ -108,14 +108,14 @@ impl App {
         let y_origin = (args.height / 2) as f64;
         let ground_y = y_origin + self.s / 2.0;
         let (x, y) = (
-            x_origin + self.state.x - self.s / 2.0,
-            y_origin + self.state.y - self.s / 2.0,
+            x_origin + self.player.x - self.s / 2.0,
+            y_origin + self.player.y - self.s / 2.0,
             );
         let mut circle_vec = Vec::new();
         for o in self.orbs.iter() {
             let (o_x, o_y) = (
-                x_origin + o.state.x - o.r,
-                y_origin + o.state.y - o.r,
+                x_origin + o.x - o.r,
+                y_origin + o.y - o.r,
                 );
             let sq = rectangle::square(0.0, 0.0, o.r * 2.0);
             circle_vec.push((o_x, o_y, sq))
@@ -127,7 +127,7 @@ impl App {
         let (text_x, text_y) = (
             10.0, 50.0
             );
-        let sec_int = self.state.time_s as i32;
+        let sec_int = self.player.time_s as i32;
         self.gl.draw(args.viewport(), |c, gl| {
             clear(WHITE, gl);
             let text_trans = c.transform.trans(text_x, text_y);
@@ -151,14 +151,14 @@ impl App {
 
     fn update(&mut self, args: &UpdateArgs) {
         let num_orbs = 20;
-        let p_x = self.state.x;
-        let p_y = self.state.y;
+        let p_x = self.player.x;
+        let p_y = self.player.y;
         let p_s = self.s;
 
         let mut vec_deleted = Vec::new();
         // Handle collisions
         for (i, o) in self.orbs.iter().enumerate() {
-            if square_circle_overlap(o.state.x, o.state.y, o.r, p_x, p_y, p_s) {
+            if square_circle_overlap(o.x, o.y, o.r, p_x, p_y, p_s) {
                 vec_deleted.push(i);
             }
         }
@@ -169,16 +169,13 @@ impl App {
         }
 
         for o in self.orbs.iter_mut() {
-            o.state.handle_time_change(p_x, p_y, args.dt);
+            o.handle_time_change(p_x, p_y, args.dt);
         }
-        self.state.handle_time_change(args.dt);
+        self.player.handle_time_change(args.dt);
         if self.orbs.len() == 0 {
             for _ in 0..num_orbs {
                 let orb_speed = 50.0 + random_f64_less_than(200.0);
-                self.orbs.push(orb::Orb {
-                    state: orb::OrbState::new(800, 800, orb_speed),
-                    r: 6.0,
-                });
+                self.orbs.push(orb::Orb::new(6.0, 800, 800, orb_speed));
             }
         }
     }
@@ -206,11 +203,11 @@ fn main() {
         }
 
         if let Some(button) = e.press_args() {
-            app.state.handle_button(button);
+            app.player.handle_button(button);
         }
 
         if let Some(button) = e.release_args() {
-            app.state.handle_release(button);
+            app.player.handle_release(button);
         }
     }
 }

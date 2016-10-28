@@ -35,11 +35,7 @@ fn sign(n: f64) -> f64 {
 }
 
 pub struct Orb {
-    pub state: OrbState,
     pub r: f64,
-}
-
-pub struct OrbState {
     pub x: f64,
     pub y: f64,
     dir_rad: f64,
@@ -47,9 +43,10 @@ pub struct OrbState {
     max_rad_turn: f64,
 }
 
-impl OrbState {
-    pub fn new(height: u32, width: u32, speed: f64) -> OrbState {
-        OrbState {
+impl Orb {
+    pub fn new(r: f64, height: u32, width: u32, speed: f64) -> Orb {
+        Orb {
+            r: r,
             x: pos_neg() as f64 * random_f64_less_than((width/2) as f64),
             y: pos_neg() as f64 * random_f64_less_than((height/2) as f64),
             dir_rad: random_f64_less_than(2.0 * f64::consts::PI),
