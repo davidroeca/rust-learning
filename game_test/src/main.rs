@@ -27,6 +27,7 @@ use opengl_graphics::glyph_cache::GlyphCache;
 mod utils;
 mod player;
 mod orb;
+use player::Player;
 
 use orb::random_f64_less_than;
 
@@ -70,7 +71,7 @@ fn square_circle_overlap(cx: f64, cy: f64, cr: f64, sx: f64, sy: f64, ss: f64)
 
 pub struct App {
     gl: GlGraphics,
-    player: player::Player,
+    player: Player,
     orbs: Vec<orb::Orb>,
     s: f64,
 }
@@ -82,7 +83,7 @@ impl App {
         let x_speed = 300.0;
         App {
             gl: GlGraphics::new(glref),
-            player: player::Player::new(x_speed),
+            player: Player::new(x_speed),
             orbs: orbs,
             s: s,
         }
