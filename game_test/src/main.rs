@@ -29,7 +29,8 @@ mod player;
 mod orb;
 use player::Player;
 
-use orb::random_f64_less_than;
+use orb::{Orb, OrbType};
+use utils::random_f64_less_than;
 
 ///
 /// Takes the center of a circle and a square, along with side length/radius
@@ -72,14 +73,14 @@ fn square_circle_overlap(cx: f64, cy: f64, cr: f64, sx: f64, sy: f64, ss: f64)
 pub struct App {
     gl: GlGraphics,
     player: Player,
-    orbs: Vec<orb::Orb>,
+    orbs: Vec<Orb>,
     s: f64,
 }
 
 impl App {
 
     pub fn new(s: f64, glref: OpenGL) -> App {
-        let orbs: Vec<orb::Orb> = Vec::new();
+        let orbs: Vec<Orb> = Vec::new();
         let x_speed = 300.0;
         App {
             gl: GlGraphics::new(glref),
@@ -100,6 +101,7 @@ impl App {
         };
         const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 1.0];
         const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
+        const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
         const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
         const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
         let square = rectangle::square(0.0, 0.0, self.s);
@@ -112,15 +114,16 @@ impl App {
             x_origin + self.player.x - self.s / 2.0,
             y_origin + self.player.y - self.s / 2.0,
             );
-        let mut circle_vec = Vec::new();
-        for o in self.orbs.iter() {
-            let (o_x, o_y) = (
-                x_origin + o.x - o.r,
-                y_origin + o.y - o.r,
-                );
-            let sq = rectangle::square(0.0, 0.0, o.r * 2.0);
-            circle_vec.push((o_x, o_y, sq))
-        }
+        //let mut circle_vec = Vec::new();
+        let orb_iter = self.orbs.iter();
+        //for o in self.orbs.iter() {
+            //let (o_x, o_y) = (
+                //x_origin + o.x - o.r,
+                //y_origin + o.y - o.r,
+                //);
+            //let sq = rectangle::square(0.0, 0.0, o.r * 2.0);
+            //circle_vec.push((o_x, o_y, sq))
+        //}
         let top_dir = utils::get_project_dir().expect("top directory not found");
         let font_path = top_dir.join("font/Xolonium-Regular.ttf");
         let mut glyph_cache = GlyphCache::new(font_path)
@@ -143,10 +146,21 @@ impl App {
                 BLACK, args.width as f64,
                 horiz_line, ground_trans, gl
                 );
-            for (o_x, o_y, sq) in circle_vec {
+            for o in orb_iter {
+                let color = match o.orb_type {
+                    OrbType::Homing => RED,
+                    OrbType::Roaming => GREEN,
+                };
+                let o_x = x_origin + o.x - o.r;
+                let o_y = y_origin + o.y - o.r;
+                let sq = rectangle::square(0.0, 0.0, o.r * 2.0);
                 let o_trans = c.transform.trans(o_x, o_y);
-                ellipse(RED, sq, o_trans, gl);
+                ellipse(color, sq, o_trans, gl);
             }
+            //for (o_x, o_y, sq) in circle_vec {
+                //let o_trans = c.transform.trans(o_x, o_y);
+                //ellipse(RED, sq, o_trans, gl);
+            //}
         })
     }
 
@@ -174,9 +188,17 @@ impl App {
         }
         self.player.handle_time_change(args.dt);
         if self.orbs.len() == 0 {
-            for _ in 0..num_orbs {
+            for _ in 0..num_orbs/2 {
                 let orb_speed = 50.0 + random_f64_less_than(200.0);
-                self.orbs.push(orb::Orb::new(6.0, 800, 800, orb_speed));
+                self.orbs.push(Orb::new(
+                        6.0, 800, 800, orb_speed, OrbType::Homing
+                        ));
+            }
+            for _ in 0..num_orbs/2 {
+                let orb_speed = 50.0 + random_f64_less_than(200.0);
+                self.orbs.push(Orb::new(
+                        6.0, 800, 800, orb_speed, OrbType::Roaming
+                        ));
             }
         }
     }
