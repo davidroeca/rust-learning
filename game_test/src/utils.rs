@@ -38,6 +38,17 @@ pub fn sign(n: f64) -> f64 {
     }
 }
 
+pub fn rotate_y(dir_rad: f64) -> f64 {
+    let safe_rad = rad_0to2pi(dir_rad);
+    let q1 = safe_rad >= 0.0 && safe_rad <= PI / 2.0;
+    let q2 = safe_rad > PI / 2.0 && safe_rad <= PI;
+    if q1 || q2 {
+        PI - safe_rad
+    } else {
+        2.0 * PI - safe_rad
+    }
+}
+
 ///
 /// Provides the full path of the project's directory
 ///

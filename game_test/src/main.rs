@@ -114,16 +114,7 @@ impl App {
             x_origin + self.player.x - self.s / 2.0,
             y_origin + self.player.y - self.s / 2.0,
             );
-        //let mut circle_vec = Vec::new();
         let orb_iter = self.orbs.iter();
-        //for o in self.orbs.iter() {
-            //let (o_x, o_y) = (
-                //x_origin + o.x - o.r,
-                //y_origin + o.y - o.r,
-                //);
-            //let sq = rectangle::square(0.0, 0.0, o.r * 2.0);
-            //circle_vec.push((o_x, o_y, sq))
-        //}
         let top_dir = utils::get_project_dir().expect("top directory not found");
         let font_path = top_dir.join("font/Xolonium-Regular.ttf");
         let mut glyph_cache = GlyphCache::new(font_path)
@@ -157,10 +148,6 @@ impl App {
                 let o_trans = c.transform.trans(o_x, o_y);
                 ellipse(color, sq, o_trans, gl);
             }
-            //for (o_x, o_y, sq) in circle_vec {
-                //let o_trans = c.transform.trans(o_x, o_y);
-                //ellipse(RED, sq, o_trans, gl);
-            //}
         })
     }
 
