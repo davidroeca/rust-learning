@@ -30,45 +30,11 @@ mod orb;
 use player::Player;
 
 use orb::{Orb, OrbType};
-use utils::random_f64_less_than;
+use utils::{
+    random_f64_less_than,
+    square_circle_overlap,
+};
 
-///
-/// Takes the center of a circle and a square, along with side length/radius
-/// and comuptes whether or not the two overlap
-///
-fn square_circle_overlap(cx: f64, cy: f64, cr: f64, sx: f64, sy: f64, ss: f64)
--> bool {
-    // Takes point and determines if it lies in the circle
-    let point_in_circle = |px: f64, py: f64| -> bool {
-        let dx = px - cx;
-        let dy = py - cy;
-        (dx * dx + dy * dy).sqrt() <= cr
-    };
-
-
-    let s_top = sy + ss / 2.0;
-    let s_bot = sy - ss / 2.0;
-    let s_rig = sx + ss / 2.0;
-    let s_lef = sx - ss / 2.0;
-    let point_in_square = |px: f64, py: f64| -> bool {
-        px <= s_rig && px >= s_lef && py <= s_top && py >= s_bot
-    };
-
-    let c_top = cy + cr;
-    let c_bot = cy - cr;
-    let c_rig = cx + cr;
-    let c_lef = cx - cr;
-    // Check if circle points are in square
-    point_in_square(cx, c_top) ||
-    point_in_square(cx, c_bot) ||
-    point_in_square(c_lef, cy) ||
-    point_in_square(c_rig, cy) ||
-    // Check if square corners are in circle
-    point_in_circle(s_rig, s_bot) ||
-    point_in_circle(s_lef, s_bot) ||
-    point_in_circle(s_rig, s_top) ||
-    point_in_circle(s_lef, s_top)
-}
 
 pub struct App {
     gl: GlGraphics,
