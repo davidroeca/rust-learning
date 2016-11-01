@@ -4,6 +4,7 @@ use utils::{
     pos_neg,
     sign,
     rad_0to2pi,
+    rotate_y,
 };
 
 pub struct Orb {
@@ -25,22 +26,12 @@ impl Orb {
     pub fn new(
         r: f64, height: u32, width: u32, speed: f64, orb_type: OrbType
     ) -> Orb {
-        let dir_rad = match orb_type {
-            OrbType::Homing => random_f64_less_than(2.0 * PI),
-            OrbType::Roaming => random_f64_less_than(2.0 * PI),
-            //OrbType::Roaming => (pos_neg() + 1) as f64 * PI / 2.0,
-        };
-        let y = match orb_type{
-            OrbType::Homing => pos_neg() as f64 * random_f64_less_than((height/2) as f64),
-            OrbType::Roaming => r,
-        };
-
         Orb {
             r: r,
             x: pos_neg() as f64 * random_f64_less_than((width/2) as f64),
-            y: y,
+            y: -random_f64_less_than((height/2) as f64),
             orb_type: orb_type,
-            dir_rad: dir_rad,
+            dir_rad: random_f64_less_than(2.0 * PI),
             speed: speed,
             max_rad_turn: PI / random_f64_less_than(10.0),
         }
@@ -54,18 +45,18 @@ impl Orb {
         let new_x = self.x + vx * dt;
         let new_y = self.y + vy * dt;
 
-        // Compute the dot product of velocity vector with player point
-        // to determine axis projection
         let get_dist_path = |x: f64, y: f64| -> f64 {
-            let x_prime1 = x * dir_rad.cos() + y * dir_rad.sin();
-            let x_prime2 = p_x * dir_rad.cos() + p_y * dir_rad.sin();
-            (x_prime1 - x_prime2).abs()
+            let dx = x - p_x;
+            let dy = y - p_y;
+            (dx * dir_rad.cos() + dy * dir_rad.sin()).abs()
         };
 
         let old_dist_path = get_dist_path(self.x, self.y);
         let new_dist_path = get_dist_path(new_x, new_y);
 
-        if new_dist_path > 300.0 && new_dist_path > old_dist_path {
+        if new_y > 0.0 {
+            self.dir_rad = rotate_y(dir_rad);
+        } else if new_dist_path > 300.0 && new_dist_path > old_dist_path {
             self.dir_rad = rad_0to2pi(PI + self.dir_rad);
         } else {
             self.x = new_x;
@@ -95,9 +86,13 @@ impl Orb {
             dir_ideal
         };
 
-        self.x = new_x;
-        self.y = new_y;
-        self.dir_rad = new_dir_rad;
+        if new_y > 0.0 {
+            self.dir_rad = rotate_y(dir_rad);
+        } else {
+            self.x = new_x;
+            self.y = new_y;
+            self.dir_rad = new_dir_rad;
+        }
     }
 
     pub fn handle_time_change(&mut self, p_x: f64, p_y: f64, dt: f64) {
