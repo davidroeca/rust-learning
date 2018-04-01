@@ -1,0 +1,7 @@
+[package]
+name = "qt_first"
+version = "0.1.0"
+authors = ["davidroeca"]
+
+[dependencies]
+qt_core = "0.2"
