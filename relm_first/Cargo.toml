@@ -1,0 +1,9 @@
+[package]
+name = "relm_first"
+version = "0.1.0"
+authors = ["davidroeca <david.roeca@gmail.com>"]
+
+[dependencies]
+gtk = "^0.3.0"
+relm = "^0.11.0"
+relm-derive = "^0.11.0"
