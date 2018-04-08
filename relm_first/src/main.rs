@@ -6,10 +6,13 @@ extern crate relm;
 #[macro_use]
 extern crate relm_derive;
 
+use gtk::prelude::*;
+
 use gtk::{
     ContainerExt,
     BoxExt,
-    EditableSignals,
+    Button,
+    ButtonExt,
     Inhibit,
     Label,
     LabelExt,
@@ -19,6 +22,7 @@ use gtk::{
     TextView,
     TextViewExt,
     TextBuffer,
+    TextBufferExt,
     WidgetExt,
     Window,
     WindowType,
@@ -40,7 +44,7 @@ pub struct Model {
 
 impl Model {
     fn format_content(&self) -> String {
-        format!("Clicked {} times! Input Text: {}", self.clicks, self.content)
+        format!("Clicked {} times! Input Text:\n{}", self.clicks, self.content)
     }
 }
 
@@ -73,12 +77,19 @@ impl Update for Win {
     fn update(&mut self, event: Msg) {
         match event {
             Msg::Change => {
-                let text = self.text_buffer.get_text().unwrap();
+                let text = self.text_buffer.get_text(
+                    &self.text_buffer.get_start_iter(),
+                    &self.text_buffer.get_end_iter(),
+                    false, // don't show invisible text
+                ).unwrap();
                 self.model.content = text;
                 self.label.set_text(&self.model.format_content());
             },
             Msg::Clicked => {
                 self.model.clicks += 1;
+                self.button.set_label(
+                    &format!("Clicks: {}", self.model.clicks)
+                );
                 self.label.set_text(&self.model.format_content());
             }
             Msg::Quit => gtk::main_quit(),
@@ -103,26 +114,28 @@ impl Widget for Win {
         stack.set_transition_type(StackTransitionType::SlideLeftRight);
         stack.set_transition_duration(1000);
 
-        let button = Button::new_with_label("Click me!");
+        let button = Button::new_with_label("Clicks: 0");
         let label = Label::new(None);
         let text_view = TextView::new();
 
         stack.add_titled(&button, "button_example", "Button Example!");
         stack.add_titled(&text_view, "text_view", "Text View!");
         stack.add_titled(&label, "info", "Info!");
-        let stack_switcher = StackSwitcher();
+        let stack_switcher = StackSwitcher::new();
         stack_switcher.set_stack(&stack);
 
         vbox.pack_start(&stack_switcher, true, true, 0);
         vbox.pack_start(&stack, true, true, 0);
 
         let window = Window::new(WindowType::Toplevel);
+        window.set_title("Hello relm!");
 
         window.add(&vbox);
 
         window.show_all();
 
-        let text_buffer = text_view.get_buffer();
+        let text_buffer = text_view.get_buffer().unwrap();
+
         connect!(
             relm,
             text_buffer,
@@ -135,7 +148,7 @@ impl Widget for Win {
             button,
             connect_clicked(_),
             Msg::Clicked
-        )
+        );
 
         connect!(
             relm,
@@ -148,6 +161,7 @@ impl Widget for Win {
             button,
             label,
             text_buffer,
+            model,
             window,
         }
     }
