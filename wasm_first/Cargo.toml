@@ -1,0 +1,9 @@
+[package]
+name = "wasm_first"
+version = "0.1.0"
+authors = ["davidroeca <david.roeca@gmail.com>"]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
