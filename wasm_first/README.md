@@ -17,3 +17,15 @@ cargo install wasm-gc
 # for serving http
 cargo install https
 ```
+
+### Build and run
+
+```bash
+# Compile and shrink web assembly
+make
+
+# Serve http, typically on 8000 (check)
+make serve
+
+# now load http://localhost:{PORT} (typically 8000) in your browser
+```
