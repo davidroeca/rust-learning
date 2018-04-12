@@ -15,3 +15,6 @@ wasm_first/Cargo.lock
 
 # Web assembly files
 *.wasm
+
+# Swap files
+*.swp
